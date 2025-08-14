@@ -12,7 +12,7 @@ import (
 // LoadEnv loads environment variables from .env file
 func LoadEnv(envPath ...string) {
 	var err error
-	
+
 	if len(envPath) > 0 {
 		// Load specific .env file path
 		err = godotenv.Load(envPath[0])
@@ -24,7 +24,7 @@ func LoadEnv(envPath ...string) {
 			err = godotenv.Load(filepath.Join("..", ".env"))
 		}
 	}
-	
+
 	if err != nil {
 		log.Println("No .env file found, using system environment variables")
 	}
@@ -87,7 +87,7 @@ type AppConfig struct {
 // LoadAppConfig loads application configuration
 func LoadAppConfig() *AppConfig {
 	LoadEnv()
-	
+
 	return &AppConfig{
 		Port:      GetEnv("APP_PORT", "8080"),
 		JWTSecret: GetRequiredEnv("JWT_SECRET"),
