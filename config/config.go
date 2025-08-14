@@ -9,28 +9,19 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// LoadEnv loads environment variables from .env file
-func LoadEnv(envPath ...string) {
-	var err error
+func LoadEnv() {
+	_ = godotenv.Load()
+	_ = godotenv.Load(filepath.Join("..", ".env"))
 
-	if len(envPath) > 0 {
-		// Load specific .env file path
-		err = godotenv.Load(envPath[0])
-	} else {
-		// Try to load .env from current directory
-		err = godotenv.Load()
-		if err != nil {
-			// Try to load from parent directory (for workspace setup)
-			err = godotenv.Load(filepath.Join("..", ".env"))
-		}
+	appEnv := os.Getenv("APP_ENV")
+	if appEnv == "" {
+		appEnv = "dev"
 	}
-
-	if err != nil {
-		log.Println("No .env file found, using system environment variables")
-	}
+	fmt.Printf("Using APP_ENV = %s\n", appEnv)
+	_ = godotenv.Overload(fmt.Sprintf(".env.%s", appEnv))
+	_ = godotenv.Overload(filepath.Join("..", fmt.Sprintf(".env.%s", appEnv)))
 }
 
-// GetEnv gets environment variable with fallback
 func GetEnv(key, fallback string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
@@ -38,7 +29,6 @@ func GetEnv(key, fallback string) string {
 	return fallback
 }
 
-// GetRequiredEnv gets required environment variable, panics if not found
 func GetRequiredEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" {
@@ -47,7 +37,6 @@ func GetRequiredEnv(key string) string {
 	return value
 }
 
-// DatabaseConfig represents database configuration
 type DatabaseConfig struct {
 	Host     string
 	Port     string
@@ -58,7 +47,6 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
-// LoadDatabaseConfig loads database configuration from environment variables
 func LoadDatabaseConfig() *DatabaseConfig {
 	return &DatabaseConfig{
 		Host:     GetEnv("DB_HOST", "localhost"),
@@ -71,26 +59,21 @@ func LoadDatabaseConfig() *DatabaseConfig {
 	}
 }
 
-// GetConnectionString returns PostgreSQL connection string
 func (db *DatabaseConfig) GetConnectionString() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s search_path=%s",
 		db.Host, db.Port, db.User, db.Password, db.Name, db.SSLMode, db.Schema)
 }
 
-// AppConfig represents general application configuration
 type AppConfig struct {
-	Port      string
-	JWTSecret string
-	Database  *DatabaseConfig
+	Port     string
+	Database *DatabaseConfig
 }
 
-// LoadAppConfig loads application configuration
 func LoadAppConfig() *AppConfig {
 	LoadEnv()
 
 	return &AppConfig{
-		Port:      GetEnv("APP_PORT", "8080"),
-		JWTSecret: GetRequiredEnv("JWT_SECRET"),
-		Database:  LoadDatabaseConfig(),
+		Port:     GetEnv("APP_PORT", "8080"),
+		Database: LoadDatabaseConfig(),
 	}
 }
